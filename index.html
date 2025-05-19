@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘 뭐해먹지?</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- 헤더 -->
+    <header class="header">
+      <div class="container">
+        <h1 class="title">오늘 뭐해먹지?</h1>
+        <div class="header-actions">
+          <button id="toggleTheme" class="btn-icon" aria-label="테마 변경">
+            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <button id="toggleLanguage" class="btn-language">KO</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+      <div class="container">
+        <!-- 검색 폼 -->
+        <section class="search-form-section">
+          <div class="card">
+            <div class="card-content">
+              <h2 class="section-title">재료로 음식 찾기</h2>
+              <p class="section-description">
+                찾고 싶은 재료를 입력하면 해당 재료가 포함된 음식 메뉴를 보여드립니다.
+              </p>
+              
+              <form id="searchForm" class="search-form">
+                <div class="form-group">
+                  <label for="ingredient" class="form-label">
+                    재료 이름 <span class="required">*</span>
+                  </label>
+                  <div class="input-group">
+                    <div class="input-wrapper">
+                      <input 
+                        type="text" 
+                        id="ingredient" 
+                        class="form-input" 
+                        placeholder="예: 김치, 고추장, 된장..."
+                        required
+                      >
+                      <button type="button" id="clearInput" class="btn-clear" aria-label="입력 지우기">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <span>검색</span>
+                    </button>
+                  </div>
+                  <p class="form-text">식품의약품안전처 공공데이터를 이용합니다.</p>
+                </div>
+                
+                <div id="recentSearches" class="recent-searches">
+                  <!-- 최근 검색어는 JavaScript로 동적 생성됨 -->
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- 검색 결과 -->
+        <section id="searchResults" class="search-results-section hidden">
+          <div class="results-header">
+            <h2 class="results-title">
+              <span id="resultsCount"></span>개의 음식 찾음
+            </h2>
+            <div class="sort-buttons">
+              <button id="sortButton" class="btn-sort" title="정렬 방식 선택">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M3 12h18M3 18h18"></path>
+                </svg>
+                정렬
+              </button>
+            </div>
+          </div>
+          
+          <div id="resultsGrid" class="results-grid">
+            <!-- 검색 결과는 JavaScript로 동적 생성됨 -->
+          </div>
+          
+          <!-- 로딩 상태 -->
+          <div id="loadingState" class="loading-state hidden">
+            <div class="spinner"></div>
+            <p>데이터를 불러오는 중입니다...</p>
+          </div>
+          
+          <!-- 빈 결과 상태 -->
+          <div id="emptyState" class="empty-state hidden">
+            <div class="empty-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h3>검색 결과가 없습니다</h3>
+            <p id="emptyStateMessage"></p>
+            <button id="newSearchBtn" class="btn btn-primary">새로운 검색 시작하기</button>
+          </div>
+          
+          <!-- 오류 상태 -->
+          <div id="errorState" class="error-state hidden">
+            <div class="error-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h3>오류가 발생했습니다</h3>
+            <p id="errorMessage">API 연결 중 문제가 발생했습니다. 다시 시도해 주세요.</p>
+            <button id="retryBtn" class="btn btn-primary">다시 시도하기</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+      <div class="container">
+        <p class="copyright">
+          &copy; 2025 오늘 뭐해먹지? - 모든 권리 보유
+        </p>
+        <div class="footer-links">
+          <a href="#" class="footer-link">이용약관</a>
+          <a href="#" class="footer-link">개인정보처리방침</a>
+          <a href="#" class="footer-link">문의하기</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 상세 정보 모달 -->
+  <div id="detailModal" class="modal" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-image-container">
+            <img id="modalImage" src="" alt="" class="modal-image">
+            <div class="modal-image-overlay"></div>
+            
+            <button class="modal-close-btn" aria-label="닫기">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            
+            <div id="modalMatchBadge" class="modal-match-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+              </svg>
+              <span id="modalMatchPercent">0%</span> 일치
+            </div>
+            
+            <div class="modal-info">
+              <h2 id="modalTitle" class="modal-title"></h2>
+              <div id="modalBadges" class="modal-badges"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 탭 인터페이스 -->
+        <div class="modal-tabs">
+          <div class="tabs">
+            <button id="tabIngredients" class="tab-button active" data-tab="ingredients">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+              재료
+            </button>
+            <button id="tabSteps" class="tab-button" data-tab="steps">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+              </svg>
+              조리 방법
+            </button>
+            <button id="tabNutrition" class="tab-button" data-tab="nutrition">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              영양 정보
+            </button>
+            <button id="tabDetails" class="tab-button" data-tab="details">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              상세 정보
+            </button>
+          </div>
+          
+          <div class="tab-content">
+            <!-- 재료 탭 내용 -->
+            <div id="tabContentIngredients" class="tab-panel active">
+              <div id="ingredientsMatchRatio" class="ingredients-match-ratio">
+                <div class="match-ratio-header">
+                  <span>재료 일치율</span>
+                  <span id="ingredientsMatchPercent" class="match-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                  <div id="ingredientsMatchProgress" class="progress" style="width: 0%"></div>
+                </div>
+                <p class="match-explanation">
+                  입력한 재료 중에서 이 레시피에 사용되는 재료의 비율입니다.
+                </p>
+              </div>
+              
+              <div class="ingredients-full-list">
+                <h4>전체 재료 정보</h4>
+                <p id="fullIngredientsList"></p>
+              </div>
+              
+              <div id="matchedIngredientsPanel" class="ingredients-panel matched">
+                <div class="ingredients-panel-header">
+                  <h4>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    보유 재료
+                  </h4>
+                  <span id="matchedIngredientsCount" class="ingredients-count">0</span>
+                </div>
+                <div id="matchedIngredientsList" class="ingredients-panel-list"></div>
+              </div>
+              
+              <div id="additionalIngredientsPanel" class="ingredients-panel additional">
+                <div class="ingredients-panel-header">
+                  <h4>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="16"></line>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    추가 필요 재료
+                  </h4>
+                  <span id="additionalIngredientsCount" class="ingredients-count">0</span>
+                </div>
+                <div id="additionalIngredientsList" class="ingredients-panel-list"></div>
+              </div>
+            </div>
+            
+            <!-- 조리 방법 탭 내용 -->
+            <div id="tabContentSteps" class="tab-panel">
+              <ol id="cookingStepsList" class="cooking-steps-list"></ol>
+              <div id="noCookingSteps" class="no-content-state hidden">
+                <div class="no-content-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                  </svg>
+                </div>
+                <h3>조리 방법 정보가 없습니다</h3>
+                <p>이 레시피에 대한 자세한 조리 방법이 제공되지 않았습니다.</p>
+              </div>
+            </div>
+            
+            <!-- 영양 정보 탭 내용 -->
+            <div id="tabContentNutrition" class="tab-panel">
+              <div id="nutritionGrid" class="nutrition-grid"></div>
+              <div id="noNutritionInfo" class="no-content-state hidden">
+                <div class="no-content-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </div>
+                <h3>영양 정보가 없습니다</h3>
+                <p>이 음식에 대한 자세한 영양 정보가 제공되지 않았습니다.</p>
+              </div>
+            </div>
+            
+            <!-- 상세 정보 탭 내용 -->
+            <div id="tabContentDetails" class="tab-panel">
+              <div id="foodCodeInfo" class="details-panel">
+                <h4>식품 코드</h4>
+                <p id="foodCode"></p>
+              </div>
+              
+              <div class="details-panel">
+                <h4>데이터 제공</h4>
+                <p>식품의약품안전처 공공데이터활용서비스</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <div class="modal-actions">
+            <button id="closeModalBtn" class="btn btn-outline">닫기</button>
+            <button id="shareRecipeBtn" class="btn btn-outline btn-share">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              공유하기
+            </button>
+            <button id="favoriteBtn" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              즐겨찾기 추가
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 템플릿 - 음식 카드 -->
+  <template id="foodCardTemplate">
+    <div class="food-card">
+      <div class="food-card-image-container">
+        <img class="food-card-image" src="" alt="">
+        <div class="food-card-overlay"></div>
+        <div class="food-card-match-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+          </svg>
+          <span class="match-percent">0%</span> 일치
+        </div>
+        <div class="food-card-calories"></div>
+      </div>
+      <div class="food-card-content">
+        <div class="food-card-header">
+          <h3 class="food-card-title"></h3>
+          <button class="btn-icon food-card-info-btn" aria-label="빠른 정보">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="food-card-badges"></div>
+        
+        <div class="food-card-ingredients">
+          <div class="matched-ingredients-section">
+            <div class="ingredients-header">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <span>보유 재료</span>
+            </div>
+            <div class="ingredients-list matched-ingredients"></div>
+          </div>
+          
+          <div class="additional-ingredients-section">
+            <div class="ingredients-header">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span>추가 필요 재료</span>
+              <span class="ingredients-count"></span>
+            </div>
+            <div class="ingredients-list additional-ingredients"></div>
+          </div>
+        </div>
+      </div>
+      <div class="food-card-footer">
+        <button class="btn-link details-link">
+          <span>상세 정보</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        
+        <button class="btn-icon favorite-btn" aria-label="즐겨찾기">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <style>
+  .sort-popup {
+    max-width: 300px !important;
+  }
+
+  .sort-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .sort-option {
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+  }
+
+  .sort-option:hover {
+    background: #f3f4f6;
+  }
+
+  .sort-option.active {
+    background: #4F46E5;
+    color: white;
+    border-color: #4F46E5;
+  }
+
+  .dark-mode .sort-option {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .dark-mode .sort-option:hover {
+    background: #374151;
+  }
+
+  .dark-mode .sort-option.active {
+    background: #4F46E5;
+    border-color: #4F46E5;
+    color: white;
+  }
+
+  /* 일치율과 보유율 표시 스타일 */
+  .food-card-match-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+  }
+
+  .food-card-match-badge svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .match-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .match-ratio, .possession-ratio {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .match-percent, .possession-percent {
+    font-weight: bold;
+    color: #4F46E5;
+  }
+
+  .dark-mode .match-percent,
+  .dark-mode .possession-percent {
+    color: #818CF8;
+  }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
